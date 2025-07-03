@@ -50,7 +50,7 @@ def process(input_file_name, output_file_name):
         "height": height,
         "max_words": 100,
         "background_color": "white",
-        "font_path": "C:\Windows\Fonts\YuGothR.ttc",
+        "font_path": "/System/Library/Fonts/Helvetica.ttc",
         "mask": ellipse_mask,
         "colormap": 'ocean',
     }
@@ -79,10 +79,11 @@ def process(input_file_name, output_file_name):
             processed_lines.append(line)
 
     # -----------------------------
-    # MeCab による名詞抽出
+    # MeCab による名詞抽出とひらがな変換
     # -----------------------------
-    tagger = MeCab.Tagger()
+    tagger = MeCab.Tagger('-d /opt/homebrew/lib/mecab/dic/ipadic')
     nouns = []
+    hiragana_text = ""
 
     for text_line in processed_lines:
         node = tagger.parseToNode(text_line)
@@ -95,13 +96,36 @@ def process(input_file_name, output_file_name):
                 # 不要なキーワードを除外
                 if surface not in keywords_to_remove:
                     nouns.append(surface)
+            
+            # 読み情報を取得してひらがなに変換
+            if len(features) >= 8 and features[7] != '*':
+                reading = features[7]
+                # カタカナをひらがなに変換
+                hiragana_reading = ""
+                for char in reading:
+                    if 'ア' <= char <= 'ン':
+                        hiragana_reading += chr(ord(char) - ord('ア') + ord('あ'))
+                    else:
+                        hiragana_reading += char
+                hiragana_text += hiragana_reading
+            else:
+                # 読み情報がない場合は元の文字をそのまま使用
+                hiragana_text += node.surface
+            
             node = node.next
+
+    # ひらがなとカタカナの文字数をカウント
+    hiragana_count = 0
+    for char in hiragana_text:
+        if 'あ' <= char <= 'ん' or 'ア' <= char <= 'ン':
+            hiragana_count += 1
 
     # 最終的に名詞のみ連結した文字列をワードクラウドに渡す
     text_for_wordcloud = " ".join(nouns)
 
     print(text_for_wordcloud)
     print(f"{len(nouns)} words")
+    print(f"ひらがな・カタカナ文字数: {hiragana_count}")
 
     # -----------------------------
     # WordCloud を生成
