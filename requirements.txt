@@ -1,0 +1,5 @@
+mecab-python3
+opencv-python
+numpy
+Pillow
+wordcloud
