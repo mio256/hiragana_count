@@ -71,6 +71,9 @@ def process(input_file_name, output_file_name):
         line = re.sub(r'\\cite\{.*?\}', '', line)         # \cite{...}
         line = re.sub(r'\\ref\{.*?\}', '', line)          # \ref{...}
         line = re.sub(r'\$\$.*?\$\$', '', line, flags=re.DOTALL)  # $$...$$
+        
+        # （）内の文字を除去
+        line = re.sub(r'（.*?）', '', line)
 
         # 文字列の前後の空白を除去
         line = line.strip()
@@ -96,10 +99,11 @@ def process(input_file_name, output_file_name):
                 # 不要なキーワードを除外
                 if surface not in keywords_to_remove:
                     nouns.append(surface)
-            
+
             # 読み情報を取得してひらがなに変換
             if len(features) >= 8 and features[7] != '*':
                 reading = features[7]
+                print(reading)
                 # カタカナをひらがなに変換
                 hiragana_reading = ""
                 for char in reading:
@@ -111,13 +115,13 @@ def process(input_file_name, output_file_name):
             else:
                 # 読み情報がない場合は元の文字をそのまま使用
                 hiragana_text += node.surface
-            
+
             node = node.next
 
-    # ひらがなとカタカナの文字数をカウント
+    # ひらがなとカタカナと長音符の文字数をカウント
     hiragana_count = 0
     for char in hiragana_text:
-        if 'あ' <= char <= 'ん' or 'ア' <= char <= 'ン':
+        if 'あ' <= char <= 'ん' or 'ア' <= char <= 'ン' or char == 'ー':
             hiragana_count += 1
 
     # 最終的に名詞のみ連結した文字列をワードクラウドに渡す
